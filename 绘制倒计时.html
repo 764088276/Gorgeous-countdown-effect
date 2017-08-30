@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>倒计时</title>
+	<style type="text/css">
+	*{
+		margin:0;
+		padding:0;
+	}
+		/*html{
+			height: 100%;
+		}*/
+	</style>
+	<script type="text/javascript" src="digit.js"></script>
+	<script type="text/javascript">
+		window.onload=init;
+		var radius=8;
+		var WINDOW_width=1000;
+		var WINDOW_height=500;
+		var MARGINLEFT=50;
+		var MARGINTOP=50;
+		var ifTime=new Date();
+		console.log(ifTime);
+		var endTime=new Date();
+		endTime.setTime(endTime.getTime()+3600*1000);
+		var ball=[];
+		var curTime=currentTime();
+		var colors=["#33B5E5","#0099CC","#AA66CC","#9933CC","#99CC00","#669900","#FFBB33",
+		"#FF8800","#FF4444","#CC0000"]
+		function init(){
+			var canvas=document.getElementById('canvas');
+			var ct=canvas.getContext('2d');
+			WINDOW_width=document.documentElement.clientWidth-20;
+			WINDOW_height=document.documentElement.clientHeight-20;
+			MARGINLEFT=WINDOW_width/10;
+			MARGINTOP=WINDOW_height/5;
+			radius=Math.round(WINDOW_width*4/5/104)-1;
+			canvas.width=WINDOW_width;
+			canvas.height=WINDOW_height;
+			curShowTime(ct);
+			setInterval(
+				function(){
+					curShowTime(ct);
+					update();
+				},50
+				);
+
+		}
+		function update(){
+			var nextTime=currentTime();
+			var nextHours=parseInt(nextTime/3600);
+			var nextMinutes=parseInt(nextTime%3600/60);
+			var nextSeconds=parseInt(nextTime%60);	
+			var curHours=parseInt(curTime/3600);
+			var curMinutes=parseInt(curTime%3600/60);
+			var curSeconds=parseInt(curTime%60);
+			if(curTime!=nextTime){
+				if( parseInt(curHours/10) != parseInt(nextHours/10) ){
+            	addBalls( MARGINLEFT + 0 , MARGINTOP , parseInt(curHours/10) );
+	        }
+	        if( parseInt(curHours%10) != parseInt(nextHours%10) ){
+	            addBalls( MARGINLEFT + 15*(radius+1) , MARGINTOP , parseInt(curHours/10) );
+	        }
+
+	        if( parseInt(curMinutes/10) != parseInt(nextMinutes/10) ){
+	            addBalls( MARGINLEFT + 37*(radius+1) , MARGINTOP , parseInt(curMinutes/10) );
+	        }
+	        if( parseInt(curMinutes%10) != parseInt(nextMinutes%10) ){
+	            addBalls( MARGINLEFT + 52*(radius+1) , MARGINTOP , parseInt(curMinutes%10) );
+	        }
+
+	        if( parseInt(curSeconds/10) != parseInt(nextSeconds/10) ){
+	            addBalls( MARGINLEFT + 74*(radius+1) , MARGINTOP , parseInt(curSeconds/10) );
+	        }
+	        if( parseInt(curSeconds%10) != parseInt(nextSeconds%10) ){
+	            addBalls( MARGINLEFT + 89*(radius+1) , MARGINTOP , parseInt(nextSeconds%10) );
+				}
+				curTime= nextTime;//没有这句话会有什么不同？	
+			}
+			updateBalls();
+			}
+			function updateBalls(){
+				for(var i=0;i<ball.length;i++){
+					ball[i].x+=ball[i].vx;
+					ball[i].y+=ball[i].vy;
+					ball[i].vy+=ball[i].g;
+					if(ball[i].y>=WINDOW_height-radius){
+						ball[i].y=WINDOW_height-radius;
+						ball[i].vy=-ball[i].vy*0.5;
+					}
+					if(ball[i].x>=WINDOW_width-radius){
+						ball[i].x=WINDOW_width-radius;
+						ball[i].vx=-ball[i].vx;
+					}
+					if(ball[i].x<=0){
+						ball.splice(i,1);
+						i--;
+					}
+				}
+			}
+			function addBalls(x,y,num){
+				for(var i=0;i<digit[num].length;i++){
+					for(var j=0;j<digit[num][i].length;j++){
+						if(digit[num][i][j]==1){
+							var aball={
+								x:x+(2*j+1)*(radius+1),
+								y:y+(2*i+1)*(radius+1),
+								g:1+Math.random(),
+								vx:Math.pow(-1,Math.ceil(Math.random()*10))*6,
+								vy:-5,
+								color:colors[Math.floor(Math.random()*colors.length)]
+							}
+							ball.push(aball);
+						}
+					}
+				}
+			}
+		function currentTime(){
+			var showTime=new Date();
+			var curShowTime=endTime.getTime()-showTime.getTime();
+			curShowTime=Math.round(curShowTime/1000);
+			return curShowTime >= 0 ? curShowTime : 0;
+		}
+		function curShowTime(ct){
+			ct.clearRect(0,0,WINDOW_width,WINDOW_height);
+			var curShowTime=currentTime();
+			var h=parseInt(curShowTime/3600);
+			var m=parseInt(curShowTime%3600/60);
+			var s=parseInt(curShowTime%60);	
+			ct.clearRect(0,0,canvas.width,canvas.height)
+			renderDigit(MARGINLEFT,MARGINTOP,parseInt(h/10),ct);
+			renderDigit(MARGINLEFT+15*(radius+1),MARGINTOP,parseInt(h%10),ct);
+			renderDigit(MARGINLEFT+29*(radius+1),MARGINTOP,10,ct);
+			renderDigit(MARGINLEFT+37*(radius+1),MARGINTOP,parseInt(m/10),ct);
+			renderDigit(MARGINLEFT+52*(radius+1),MARGINTOP,parseInt(m%10),ct);
+			renderDigit(MARGINLEFT+66*(radius+1),MARGINTOP,10,ct);
+			renderDigit(MARGINLEFT+74*(radius+1),MARGINTOP,parseInt(s/10),ct);
+			renderDigit(MARGINLEFT+89*(radius+1),MARGINTOP,parseInt(s%10),ct);
+			for(var i=0;i<ball.length;i++){
+				ct.fillStyle=ball[i].color;
+				ct.beginPath();
+				ct.arc(ball[i].x,ball[i].y,radius,0,2*Math.PI);
+				ct.closePath();
+				ct.fill();
+			}
+		}
+		function renderDigit(x,y,num,ct){	
+			ct.fillStyle="blue";
+			for(var i=0;i<digit[num].length;i++){
+				for(var j=0;j<digit[num][i].length;j++){
+					if(digit[num][i][j]==1){
+						ct.beginPath();
+						ct.arc(x+(radius+1)*(2*j+1),y+(radius+1)*(2*i+1),radius,0,Math.PI*2);
+						ct.closePath;
+						ct.fill();
+					}
+				}
+			}
+		}
+	</script>
+</head>
+<body style="height:100%">
+	<canvas id="canvas" style="height:100%">
+		本浏览器不支持canvas功能
+	</canvas>
+</body>
+</html>
